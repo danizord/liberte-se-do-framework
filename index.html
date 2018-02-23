@@ -1,0 +1,424 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Liberte-se do framework</title>
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black.css">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section>
+          <h1>Liberte-se</h1>
+          <h2>do framework</h2>
+        </section>
+
+        <section>
+          <h2>Daniel Gimenes</h2>
+          <ul>
+            <li>Engenheiro de Software @ Maestrooo</li>
+            <li>Sistemas de Informação @ UNISAL</li>
+            <li>Open source contributor</li>
+            <li><span style="color:red">❤</span> blockchains, smart contracts, cryptoeconomics...</li>
+          </ul>
+          <p><a href="http://twitter.com/danizord">@Danizord</a></p>
+
+          <aside class="notes">
+            Avisar: Façam perguntas!
+          </aside>					
+        </section>
+
+        <section>
+          <h2>Frameworks</h2>
+          <h1 class="fragment">They all suck</h1>
+          <p class="fragment">Rasmus Lerdorf</p>
+
+          <aside class="notes">
+            Perguntar: Quais frameworks vcs usam?
+          </aside>					
+        </section>
+
+        <section>
+          <h2>Frameworks</h2>
+          <ul>
+            <li class="fragment">Vêm acompanhados de decisões prematuras</li>
+            <li class="fragment">Adicionam overhead desnecessário</li>
+            <li class="fragment">Ficam no seu caminho</li>
+            <li class="fragment">Limitam o ecossistema</li>
+            <li class="fragment">Aumentam a curva de aprendizado</li>
+            <li class="fragment">Dificultam a evolução</li>
+          </ul>
+
+          <aside class="notes">
+            Destrinchar essa parte
+          </aside>
+        </section>
+
+        <section data-background-image="/img/hmm.gif">
+          <h1>Mhmm, e aí?</h1>
+        </section>
+
+        <section>
+          <h2>Frameworks fullstack?</h2>
+          <h5 class="fragment">nope</h5>
+
+          <aside class="notes">
+            A maioria dos frameworks não são realmente "modulares" e "desacoplados"
+          </aside>					
+        </section>
+
+        <section>
+          <h2>Microframeworks?</h2>
+          <h5 class="fragment">é... Mas e a interoperabilidade?</h5>
+
+          <aside class="notes">
+            Lumen, Symfony, Zend Expressive... Mas e a interoperabilidade?
+          </aside>
+        </section>
+
+        <section>
+          <h2>Componentes padronizados?</h2>
+          <h5 class="fragment">Yep!</h5>
+        </section>
+
+        <section>
+          <h5>Falando em padrões...</h5>
+          <h2 class="fragment">HTTP</h2>
+        </section>
+
+        <section>
+          <h2>SAPI</h2>
+					<ul>
+            <li>$_GET</li>
+            <li>$_POST</li>
+            <li>$_SERVER</li>
+            <li>$_FILES</li>
+            <li>$_COOKIES</li>
+            <li>fopen('php://input');</li>
+            <li>header('HTTP/1.1 404 Not Found');</li>
+            <li>header('Content-type: text/html');</li>                
+            <li>echo 'Not found';</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>PSR-7</h2>
+          <ul>
+            <li>ServerRequestInterface</li>
+            <li>ResponseInterface</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Implementações PSR-7</h3>
+          <ul>
+            <li>guzzlehttp/psr7</li>
+            <li>symfony/psr-http-message-bridge</li>
+            <li>slim/slim</li>
+            <li>zendframework/zend-diactoros</li>
+            <li>...</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Implementações PSR-7</h3>
+          <ul>
+            <li>guzzlehttp/psr7</li>
+            <li>symfony/psr-http-message-bridge</li>
+            <li>slim/slim</li>
+            <li>zendframework/zend-diactoros</li>
+            <li>...</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>SAPI <-> Zend\Diactoros</h3>
+          <pre><code class="php" data-trim>
+use Zend\Diactoros\Response\JsonResponse;            
+use Zend\Diactoros\Response\SapiEmitter;
+use Zend\Diactoros\ServerRequestFactory;
+
+$request  = ServerRequestFactory::fromGlobals();
+$response = new JsonResponse([
+  'greeting' => 'Hello ' . $request->getQueryParams()['name']
+]);
+
+(new SapiEmitter())->emit($response);
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Business logic</h3>
+          <pre><code class="php" data-trim>
+interface TodoServiceInterface
+{
+    public function addTodo(int $id, string $title): void;
+
+    public function markTodoAsDone(int $id);
+}
+          </code></pre>
+        </section>        
+
+        <section>
+          <h3>PSR-15: Server request handler</h3>
+          <pre><code class="php" data-trim>
+namespace Psr\Http\Server;
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+
+interface RequestHandlerInterface
+{
+    public function handle(
+      ServerRequestInterface $request
+    ): ResponseInterface;
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <p>AddTodo</p>
+          <pre><code class="php" data-trim>
+final class AddTodo implements RequestHandlerInterface
+{
+  private $todoService;
+
+  public function __construct(TodoServiceInterface $service)
+  {
+      $this->todoService = $todoService;
+  }
+
+  public function handle(ServerRequestInterface $request)
+  {
+    $data = $request->getParsedBody();
+
+    $this->todoService->addTodo(
+      $data['id'],
+      $data['title']
+    );
+
+    return new JsonResponse(['message' => 'Todo added']);
+  }
+}
+          </code></pre>
+        </section>
+
+        <section>
+          <p>MarkTodoAsDone</p>
+          <pre><code class="php" data-trim>
+final class MarkTodoAsDone implements RequestHandlerInterface
+{
+  // ... Dependency Injection ... //
+
+  public function handle(ServerRequestInterface $request)
+  {
+    $data = $request->getParsedBody();
+
+    $this->todoService->markTodoAsDone($data['id']);
+
+    return new JsonResponse(['message' => 'Todo done']);
+  }
+}
+          </code></pre>
+        </section>        
+
+        <section>
+          <h2>Injeção de dependência</h2>
+          <pre class="fragment"><code class="php" data-trim>
+namespace Psr\Container;
+
+interface ContainerInterface
+{
+    public function get(string $id): mixed;
+    public function has(string $id): bool;
+}
+          </code></pre>
+          <p class="fragment">$ composer require psr/container</p>
+          
+          <aside class="notes">
+            Falar do Symfony 4 DependencyInjection
+          </aside>					
+        </section>
+
+        <section>
+          <h2>Injeção de dependência</h2>
+          <ul>
+            <li>symfony/dependency-injection</li>
+            <li>bitexpert/disco</li>
+            <li>zendframework/zend-servicemanager</li>
+            <li>php-di/php-di</li>
+            <li>league/container</li>
+            <li>...</li>
+          </ul>          
+        </section>        
+
+        <section>
+          <h2>Configurando o container</h2>
+          <ul class="fragment">
+            <li>Symfony Flex</li>
+            <li>Zend Component Installer</li>
+          </ul>
+
+          <aside class="notes">
+            Essa parte ainda não é tão padronizada, mas isso não é problema!
+          </aside>	          
+        </section>
+
+        <section>
+          <h3>Refatorando</h3>
+          <pre><code class="php" data-trim>
+$container = new Container();
+$handler = $container->get(AddTodo::class);
+
+$request = ServerRequestFactory::fromGlobals();
+$response = $handler->handle($request);
+
+(new SapiEmitter())->emit($response);
+          </code></pre>
+        </section>
+
+        <section>
+          <ul>
+            <li>Tratamento de erros</li>
+            <li>Roteamento</li>
+            <li>Autenticação</li>
+            <li>Controle de acesso</li>
+            <li>Prevenção contra ataques</li>
+            <li>Validação de entrada</li>
+            <li>Tratamento de saída</li>
+            <li>Controle de sessão</li>
+            <li>Cache HTTP</li>
+            <li>Log de acessos</li>
+            <li>Negociação de conteúdo</li>
+            <li>...</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Middlewares</h2>
+        </section>
+
+        <section>
+          <h3>PSR-15: Middleware</h3>
+          <pre><code class="php" data-trim>
+namespace Psr\Http\Server;
+
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
+
+interface MiddlewareInterface
+{
+  public function process(
+    ServerRequestInterface $request,
+    RequestHandlerInterface $handler
+  ): ResponseInterface;
+}
+          </code></pre>
+        </section>
+
+        <section data-background="white">
+          <img src="/img/middleware.png" class="plain">
+        </section>
+
+        <section>
+          <h4>Implementações middleware pipeline</h4>
+          <ul>
+            <li>zendframework/zend-diactoros</li>
+            <li>slim/slim</li>
+            <li>mindplay/middleman</li>
+            <li>middleland/dispatcher</li>
+            <li>danizord/mid</li>
+            <li>...</li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Configurando rotas</h3>
+          <pre><code class="php" data-trim>
+// Configure routes
+$router = new Router($container);
+
+$router->post('/todos', AddTodo::class);
+$router->post('/todos/{id}/done', MarkTodoAsDone::class);
+          </code></pre>
+        </section>
+
+        <section>
+          <h3>Configurando pipeline</h3>
+          <pre><code class="php" data-trim>
+// Configure middleware pipeline              
+$pipeline = new MiddlewarePipeline($container);
+
+$pipeline->pipe(ErrorHandler::class);
+$pipeline->pipe(Authentication::class);
+$pipeline->pipe($router);
+$pipeline->pipe(Authorization::class);
+$pipeline->pipe(InputValidation::class);
+$pipeline->pipe(RequestHandler::class);
+          </code></pre>
+        </section>        
+
+        <section>
+          <h3>Refatorando</h3>
+          <pre><code class="php" data-trim>
+$request = ServerRequestFactory::fromGlobals();
+$response = $pipeline->handle($request);
+
+(new SapiEmitter())->emit($response);
+          </code></pre>
+        </section>        
+
+        <section>
+          <h2>Bonus points</h2>
+          <ul>
+            <li>Single Page App</li>
+            <li>Firebase</li>
+            <li>CQRS</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Perguntas?!</h2>
+        </section>
+
+				<section>
+          <h3>Obrigado!</h3>
+          <p><a href="http://twitter.com/danizord">@Danizord</a></p>
+        </section>        
+      </div>
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+      // More info about config & dependencies:
+      // - https://github.com/hakimel/reveal.js#configuration
+      // - https://github.com/hakimel/reveal.js#dependencies
+      Reveal.initialize({
+        dependencies: [
+          { src: 'plugin/markdown/marked.js' },
+          { src: 'plugin/markdown/markdown.js' },
+          { src: 'plugin/notes/notes.js', async: true },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+        ]
+      });
+    </script>
+  </body>
+</html>
